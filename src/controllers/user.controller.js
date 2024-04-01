@@ -112,6 +112,128 @@ const refreshAccessToken=asyncHandler(async (req,res)=>{
 throw new ApiError(401,"unothorised request, inside catch of refresh access token")
     }
 })
+const changePassword=asyncHandler(async(req,res)=>{
+const {oldPassword,newPassword}=req.body;
+if(oldPassword===newPassword)
+throw new ApiError(400,"new and old password cannot be same");
+const user=req.user;
+if(!user)
+throw new ApiError(401,"unauthored to change password");
 
+const isPasswordCorrect=await user.isPasswordCorrect(oldPassword);
+if(!isPasswordCorrect)
+throw new ApiError(400,"invalid old password ");
 
-export {registerUser,loginUser,logoutUser,refreshAccessToken}
+user.password=newPassword;
+await user.save({validateBeforeSave:false});
+return res.status(200).json(new ApiResponse(200,{},"password updated successfully"))
+})
+const getCurrentUser=asyncHandler(async(req,res)=>{
+    const user=user;
+    res.status(200).json(new ApiResponse(200,user,"current user fetched successfully"));
+})
+const updateAccountDetails=asyncHandler(async(req,res)=>{
+const {fullname,email}=req.body;
+if(!fullname && !email)
+throw new ApiError(400,"nothing to update");
+const user=req.user;
+if(!fullname)
+fullname=await user.fullname;
+if(!email)
+email=await user.email;
+
+const updatedDetails=User.findByIdAndUpdate(user._id,{$set:{fullname,email}},{new:true}).select("-password");
+return res.status(200).json(new ApiResponse(200,updatedDetails,"updated the details"));
+})
+const updateUserAvatar=asyncHandler(async(req,res)=>{
+const avatar=req.file?.path;
+if(!avatar)
+throw new ApiError(400,"nothing to update");
+const user=req.user;
+const uploadedAvatar=await uploadOnCloudinary(avatar);
+if(!uploadOnCloudinary.url)
+throw new ApiError(500,"retry, not able to upload on cloudinary");
+
+user.avatar=uploadedAvatar.url;
+user.save({validateBeforeSave:false});
+return res.status(200).json(new ApiResponse(200,uploadedAvatar,"Avatar Uploaded Successfully"))
+})
+
+const updateUserCoverImage=asyncHandler(async(req,res)=>{
+    const coverImage=req.file?.path;
+    if(!coverImage)
+    throw new ApiError(400,"nothing to update");
+    const user=req.user;
+    const uploadedCoverImage=await uploadOnCloudinary(coverImage);
+    if(!uploadOnCloudinary.url)
+    throw new ApiError(500,"retry, not able to upload on cloudinary");
+    
+    user.coverImage=uploadedCoverImage.url;
+    user.save({validateBeforeSave:false});
+    return res.status(200).json(new ApiResponse(200,uploadedCoverImage,"CoverImage Uploaded Successfully"))
+    })
+    const getUserChannelProfile=asyncHandler(async(req,res)=>{
+        const {username}=req.params;
+        if(!username?.trim())
+        throw new ApiError(400,"username is missing");
+        
+        const channel=await User.aggregate(
+            [
+                {
+                    $match:{
+                        username:username?.toLowerCase()
+                    }
+                },
+                {
+                    $lookup:{
+                        from:"subscription",
+                        localField:"_id",
+                        foreignField:"channel",
+                        as:"subscribers"
+                    }
+                },
+                {
+                    $lookup:{
+                        from:"subscription",
+                        localField:"_id",
+                        foreignField:"subscriber",
+                        as:"subscribedTo"
+                    }
+                },
+                {
+                    $addField:{
+                        subscribersCount:{$size:"$subscribers"},
+                        channelSubscribedToCount:{$size:"$subscribed"},
+                        isSubscribed:{
+                            $cond:{
+                                if :{$in:[req.user?._id,"$subscribers.subscriber"]},
+                                then:true,
+                                else: false
+                            }
+                        }
+                    }
+                },
+                {
+                    $project:{
+                        username:1,
+                        fullname:1,
+                        email:1,
+                        avatar:1,
+                        coverImage:1,
+                        subscribersCount:1,
+                        isSubscribed:1,
+                        channelSubscribedToCount
+
+                    }
+                }
+            
+            ]
+            
+
+        )
+        if(!channel?.length)
+        throw new ApiError(400,"channel is missing/does not exist");
+        return res.status(200).json(new ApiResponse(200,channel[0],"got user / channel profile"))
+    })
+
+export {registerUser,loginUser,logoutUser,refreshAccessToken,getCurrentUser,changePassword,updateAccountDetails,updateUserCoverImage,updateUserAvatar}
