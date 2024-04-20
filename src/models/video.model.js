@@ -1,6 +1,5 @@
 import { mongoose, Schema } from "mongoose";
-import { types } from "npm/lib/config/core";
-import mongooseAgregatePaginate from "mongoose-agregate=paginate-v2"
+import mongooseAgregatePaginate from "mongoose-aggregate-paginate-v2"
 const videoSchema=new Schema({
 videoFile:{
     type:String,
@@ -8,7 +7,6 @@ videoFile:{
 },
 thumbnail:{
     type:String,
-    required:true
 },
 title:{
     type:String,

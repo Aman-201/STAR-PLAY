@@ -72,13 +72,15 @@ const registerUser=asyncHandler(async(req,res)=>{
         {
             throw new ApiError("400","No user found");
         }
+        console.log(existedUser)
         const authenticUser=await existedUser.isPasswordCorrect(existedUser.password);
+        console.log(authenticUser)
         if(!authenticUser)
         throw new ApiError("400","Wrong Password");
        const {refresToken,accessToken}=await generateAccessAndRefreshToken(existedUser);
-        const addToken=await User.update({'_id':existedUser._id},{$set:{"accessToken":accessToken,"refreshToken":refresToken}});
+        const addToken=await User.findByIdAndUpdate({'_id':existedUser._id},{$set:{"accessToken":accessToken,"refreshToken":refresToken}});
         console.log("tokens added to db")
-        const loggedinUser=await User.findById(user._id).select("-password -refreshToken")
+        const loggedinUser=await User.findById(authenticUser._id).select("-password -refreshToken")
         const options={
             httpOnly:true,
             secure:true
@@ -129,7 +131,7 @@ await user.save({validateBeforeSave:false});
 return res.status(200).json(new ApiResponse(200,{},"password updated successfully"))
 })
 const getCurrentUser=asyncHandler(async(req,res)=>{
-    const user=user;
+    const user=req.user;
     res.status(200).json(new ApiResponse(200,user,"current user fetched successfully"));
 })
 const updateAccountDetails=asyncHandler(async(req,res)=>{

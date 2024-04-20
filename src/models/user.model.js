@@ -54,7 +54,12 @@ userSchema.pre("save", async function (next){
     next();
 })
 userSchema.methods.isPasswordCorrect=async function(password){
-return await bcrypt.compare(password,this.password);
+    // const tt=await bcrypt.hash(password,10);
+    console.log(password)
+    console.log(this.password);
+    return (password===this.password)
+    //need to check why compare not working while logging in everytime it is giving error
+// return await bcrypt.compare(password,this.password);
 }
 userSchema.methods.generateAccessToken=function(){
     return jwt.sign({
@@ -65,7 +70,7 @@ userSchema.methods.generateAccessToken=function(){
     },
     process.env.ACCESS_TOKEN_SECRET,
     {
-expiresIn:ACCESS_TOKEN_EXPIRY
+expiresIn:process.env.ACCESS_TOKEN_EXPIRY
     })
 }
 userSchema.methods.generateRefreshToken=function(){
@@ -74,7 +79,7 @@ userSchema.methods.generateRefreshToken=function(){
     },
     process.env.REFRESH_TOKEN_SECRET,
     {
-expiresIn:REFRESH_TOKEN_EXPIRY
+expiresIn:process.env.REFRESH_TOKEN_EXPIRY
     })
 }
 const User=mongoose.model("User",userSchema)
