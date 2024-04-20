@@ -1,5 +1,5 @@
 import mongoose, {Schema} from "mongoose";
-import mongooseAgregatePaginate from "mongoose-agregate=paginate-v2"
+import mongooseAgregatePaginate from "mongoose-aggregate-paginate-v2"
 const commentSchema= new Schema({
 content:{
     type:String,
@@ -9,7 +9,7 @@ video:{
     type:Schema.Types.ObjectId,
     ref:"Video"
 },
-Owner:{
+owner:{
     type:Schema.Types.ObjectId,
     ref:"User"
 }
