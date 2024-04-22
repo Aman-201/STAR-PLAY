@@ -9,4 +9,4 @@ const tweetSchema=new Schema({
         ref:"User"
     }
 },{timestamps:true});
-const Tweet=mongoose.model("Tweet",tweetSchema);
+export const Tweet=mongoose.model("Tweet",tweetSchema);
