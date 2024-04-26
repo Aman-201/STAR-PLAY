@@ -4,12 +4,13 @@ import {ApiResponse} from '../utils/ApiResponse.js';
 import { Video } from '../models/video.model.js';
 import { ObjectId } from 'bson';
 import { Playlist } from '../models/playlist.model.js';
+import mongoose from 'mongoose';
 
 const createPlaylist=asyncHandler(async(req,res)=>{
 const {name,description}=req.body;
 //we can also add a feature that no two duplicate playlist can exist but currently we are not taking that in our case
 
-const playlist=await Playlist.create({name,description,owner:req.user_id});
+const playlist=await Playlist.create({name,description,owner:req.user._id});
 if(!playlist)
 throw new ApiError(400,"Error while creating a playlist");
 return res.status(200).json(new ApiResponse(200,playlist,"PLAYLIST CREATED SUCCESSFULLY"))
@@ -80,5 +81,14 @@ const getPlaylistById=asyncHandler(async(req,res)=>{
                 return res.status(200).json(new ApiResponse(200,playlist," Playlist Details Updated SUCCESSFULLY"))
                 
             })
-
-export {createPlaylist,getPlaylistById,deletePlaylist,addVideoToPlaylist,deleteVideoFromPlaylist,updatePlaylist}
+const getUserPlaylists=asyncHandler(async(req,res)=>{
+    const playlist=await Playlist.aggregate([
+        {
+            $match:{
+                owner:req.user_id
+            }
+        }
+    ])
+    res.status(200).json(new ApiResponse(200,playlist,"User Playlists fetched successfully"))
+})
+export {createPlaylist,getPlaylistById,deletePlaylist,addVideoToPlaylist,deleteVideoFromPlaylist,updatePlaylist,getUserPlaylists}

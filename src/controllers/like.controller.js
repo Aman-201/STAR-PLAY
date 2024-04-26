@@ -95,5 +95,18 @@ const toggleCommentLike=asyncHandler(async(req,res)=>{
         
         
         })
+        const getLikedVideos=asyncHandler(async(req,res)=>{
+        const likedBy=req.user._id;
+        //can also add pagination here
+        //also test with other users likes , currently checked with one user only
+        const likedVideos=await Like.aggregate([
+            {
+                $match:{
+                    likedBy
+                }
+            }
+        ])
+        return res.status(200).json(new ApiResponse(200,likedVideos,"Liked Videos fetched successfully"))
+        })
 
-export {toggleVideoLike, toggleTweetLike, toggleCommentLike}
+export {toggleVideoLike, toggleTweetLike, toggleCommentLike,getLikedVideos}

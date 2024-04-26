@@ -44,4 +44,14 @@ const deleteTweet=async(req,res)=>
     throw new ApiError(400, "Tweet not Deleted");
 return res.status(200).json(new ApiResponse(200,tweet,"Tweet Deleted successfully"));
 }
-export {createTweet,updateTweet,deleteTweet}
+const getUserTweets=asyncHandler(async(req,res)=>{
+const tweets=await Tweet.aggregate([
+    {
+        $match:{
+            owner:req.user._id
+        }
+    }
+])
+return res.status(200).json(new ApiResponse(200,tweets,"Tweets fetched successfully"));
+})
+export {createTweet,updateTweet,deleteTweet,getUserTweets}

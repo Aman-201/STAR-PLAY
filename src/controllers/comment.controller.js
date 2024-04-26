@@ -8,6 +8,22 @@ import { Video } from "../models/video.model.js";
 const getVideoComments=asyncHandler(async(req,res)=>{
     const {videoId}=req.params;
     const {page=1,limit=10}=req.query;
+    const video=await Video.findById({_id:new ObjectId(videoId)})
+    if(!video)
+    throw new ApiError(400,"User must comment on a Valid Video");
+    const comments=await Comment.aggregatePaginate(await Comment.aggregate([
+        {
+            $match:{
+                video:video._id
+            }
+        }
+    ]),{page,limit})
+    if(!comments)
+    {
+        throw new ApiError(400,"Comments not found");
+    }
+    return res.status(200).json(new ApiResponse(200,comments,"Comments fetched successfully for the given Video"))
+
 })
 const addComments=asyncHandler(async(req,res)=>{
     const {videoId}=req.params;
@@ -60,4 +76,4 @@ const updateComments=asyncHandler(async(req,res)=>{
 
 
 
-export {addComments,updateComments,deleteComments}
+export {addComments,updateComments,deleteComments,getVideoComments}

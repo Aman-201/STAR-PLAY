@@ -11,7 +11,43 @@ import { ObjectId } from "bson"
 
 //at the end
 const getAllVideos=asyncHandler(async(req,res)=>{
+const {page=1,limit=10,query="",userId,sortBy="createdAt",sortType=1}=req.query;
+const videos=await Video.aggregatePaginate(await Video.aggregate([
+    {
+        $match:{
+            owner:new ObjectId(userId)
+        },
+    },
+        {
+            $sort:{
+                sortBy:sortType
+            }
+        
+            },
+            {
+                $lookup:{
+                    from:"users",
+                    localField:"owner",
+                    foreignField:"_id",
+                    as:"owner",
+                },
 
+            },
+            {
+                $project:{
+                    _id:1,
+                    title:1,
+                    description:1,
+                    thumbnail:1,
+                    duration:1,
+                    views:1,
+                    owner:["$owner.fullname","$owner.email"],
+                }
+            }
+        
+        
+]),{page,limit});
+return res.status(200).json(new ApiResponse(200,videos,"fetched all videos successfully"));
 })
 const publishVideo=asyncHandler(async(req,res)=>{
     console.log(req.user._id)
@@ -113,5 +149,5 @@ const deleteVideo=asyncHandler(async(req,res)=>{
     return res.status(200).json(new ApiResponse(200,deletedVideo,"deleted the video by id successfully"));
 
 })
-export {publishVideo,getVideoById,updateVideo,deleteVideo}
+export {publishVideo,getVideoById,updateVideo,deleteVideo,getAllVideos}
 
